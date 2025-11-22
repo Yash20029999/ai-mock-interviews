@@ -18,6 +18,19 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
+// Validate required Firebase client configuration
+if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+  const missingVars = [];
+  if (!firebaseConfig.apiKey) missingVars.push("NEXT_PUBLIC_FIREBASE_API_KEY");
+  if (!firebaseConfig.projectId) missingVars.push("NEXT_PUBLIC_FIREBASE_PROJECT_ID");
+  
+  throw new Error(
+    `Missing required Firebase client environment variables: ${missingVars.join(", ")}. ` +
+    "Please ensure these are set in your .env.local file. " +
+    "You can find these values in Firebase Console > Project Settings > General > Your apps"
+  );
+}
+
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 // const analytics = getAnalytics(app);
