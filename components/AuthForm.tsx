@@ -78,12 +78,14 @@ const AuthForm = ({ type }: { type: FormType }) => {
         });
 
         if (!signInResult?.success) {
-          toast.error("Account created but sign in failed. Please sign in manually.");
+          toast.error(signInResult.message || "Account created but sign in failed. Please sign in manually.");
           router.push("/sign-in");
           return;
         }
 
         toast.success("Account created successfully!");
+        // Small delay to ensure cookie is set, then redirect
+        await new Promise(resolve => setTimeout(resolve, 100));
         // Use window.location for a full page reload to ensure cookie is recognized
         window.location.href = "/";
       } else {
@@ -112,6 +114,8 @@ const AuthForm = ({ type }: { type: FormType }) => {
         }
 
         toast.success("Signed in successfully.");
+        // Small delay to ensure cookie is set, then redirect
+        await new Promise(resolve => setTimeout(resolve, 100));
         // Use window.location for a full page reload to ensure cookie is recognized
         window.location.href = "/";
       }

@@ -10,19 +10,24 @@ const SESSION_DURATION = 60 * 60 * 24 * 7;
 export async function setSessionCookie(idToken: string) {
   const cookieStore = await cookies();
 
-  // Create session cookie
-  const sessionCookie = await auth.createSessionCookie(idToken, {
-    expiresIn: SESSION_DURATION * 1000, // milliseconds
-  });
+  try {
+    // Create session cookie
+    const sessionCookie = await auth.createSessionCookie(idToken, {
+      expiresIn: SESSION_DURATION * 1000, // milliseconds
+    });
 
-  // Set cookie in the browser
-  cookieStore.set("session", sessionCookie, {
-    maxAge: SESSION_DURATION,
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    sameSite: "lax",
-  });
+    // Set cookie in the browser
+    cookieStore.set("session", sessionCookie, {
+      maxAge: SESSION_DURATION,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      sameSite: "lax",
+    });
+  } catch (error) {
+    console.error("Error setting session cookie:", error);
+    throw error;
+  }
 }
 
 export async function signUp(params: SignUpParams) {
@@ -71,14 +76,36 @@ export async function signIn(params: SignInParams) {
   const { email, idToken } = params;
 
   try {
-    const userRecord = await auth.getUserByEmail(email);
-    if (!userRecord)
+    // Verify the idToken and get user info directly from it
+    // This is more reliable than getUserByEmail, especially for newly created users
+    const decodedToken = await auth.verifyIdToken(idToken);
+    
+    // Verify user exists in database
+    const userRecord = await db
+      .collection("users")
+      .doc(decodedToken.uid)
+      .get();
+    
+    if (!userRecord.exists) {
+      console.error("User not found in database:", decodedToken.uid);
       return {
         success: false,
-        message: "User does not exist. Create an account.",
+        message: "User does not exist in database. Please create an account.",
       };
+    }
 
     await setSessionCookie(idToken);
+    
+    // Verify cookie was set
+    const cookieStore = await cookies();
+    const sessionCookie = cookieStore.get("session");
+    if (!sessionCookie) {
+      console.error("Failed to set session cookie");
+      return {
+        success: false,
+        message: "Failed to set session. Please try again.",
+      };
+    }
     
     return {
       success: true,
@@ -89,7 +116,7 @@ export async function signIn(params: SignInParams) {
 
     return {
       success: false,
-      message: "Failed to log into account. Please try again.",
+      message: error.message || "Failed to log into account. Please try again.",
     };
   }
 }
