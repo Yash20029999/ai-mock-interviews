@@ -75,12 +75,17 @@ export async function signUp(params: SignUpParams) {
 export async function signIn(params: SignInParams) {
   const { email, idToken } = params;
 
+  console.log("signIn server action called with email:", email);
+
   try {
     // Verify the idToken and get user info directly from it
     // This is more reliable than getUserByEmail, especially for newly created users
+    console.log("Verifying idToken...");
     const decodedToken = await auth.verifyIdToken(idToken);
+    console.log("Token verified, UID:", decodedToken.uid);
     
     // Verify user exists in database
+    console.log("Checking user in database...");
     const userRecord = await db
       .collection("users")
       .doc(decodedToken.uid)
@@ -94,8 +99,10 @@ export async function signIn(params: SignInParams) {
       };
     }
 
+    console.log("User found in database, setting session cookie...");
     // Set the session cookie
     await setSessionCookie(idToken);
+    console.log("Session cookie set successfully");
     
     // Note: We don't verify the cookie here because cookies set in server actions
     // are only available in subsequent requests, not in the same request

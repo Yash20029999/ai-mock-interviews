@@ -76,20 +76,25 @@ const AuthForm = ({ type }: { type: FormType }) => {
         // Small delay to ensure user is fully created in Firebase Auth
         await new Promise(resolve => setTimeout(resolve, 500));
 
+        console.log("Calling signIn server action after sign-up...");
         const signInResult = await signIn({
           email,
           idToken,
         });
 
+        console.log("SignIn result after sign-up:", signInResult);
+
         if (!signInResult?.success) {
+          console.error("Sign in failed after sign-up:", signInResult);
           toast.error(signInResult.message || "Account created but sign in failed. Please sign in manually.");
           router.push("/sign-in");
           return;
         }
 
+        console.log("Sign in successful after sign-up, redirecting...");
         toast.success("Account created successfully!");
         // Small delay to ensure cookie is set, then redirect
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 200));
         // Use window.location for a full page reload to ensure cookie is recognized
         window.location.href = "/";
       } else {
@@ -107,19 +112,24 @@ const AuthForm = ({ type }: { type: FormType }) => {
           return;
         }
 
+        console.log("Calling signIn server action...");
         const signInResult = await signIn({
           email,
           idToken,
         });
 
+        console.log("SignIn result:", signInResult);
+
         if (!signInResult?.success) {
+          console.error("Sign in failed:", signInResult);
           toast.error(signInResult.message || "Sign in failed. Please try again.");
           return;
         }
 
+        console.log("Sign in successful, redirecting...");
         toast.success("Signed in successfully.");
         // Small delay to ensure cookie is set, then redirect
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 200));
         // Use window.location for a full page reload to ensure cookie is recognized
         window.location.href = "/";
       }
