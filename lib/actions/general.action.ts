@@ -95,6 +95,11 @@ export async function getLatestInterviews(
 ): Promise<Interview[] | null> {
   const { userId, limit = 20 } = params;
 
+  // Validate userId to prevent undefined being passed to Firestore
+  if (!userId || typeof userId !== "string") {
+    return [];
+  }
+
   // Fetch all finalized interviews, then filter and sort in memory
   // This avoids requiring a complex composite index with inequality filters
   const interviews = await db
@@ -122,6 +127,11 @@ export async function getLatestInterviews(
 export async function getInterviewsByUserId(
   userId: string
 ): Promise<Interview[] | null> {
+  // Validate userId to prevent undefined being passed to Firestore
+  if (!userId || typeof userId !== "string") {
+    return [];
+  }
+
   // Fetch all interviews for the user, then sort in memory
   // This avoids requiring a composite index
   const interviews = await db

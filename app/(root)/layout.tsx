@@ -6,6 +6,9 @@ import { redirect } from "next/navigation";
 import { isAuthenticated } from "@/lib/actions/auth.action";
 import { LogoutButton } from "@/components/LogoutButton";
 
+// Mark as dynamic since we use cookies
+export const dynamic = "force-dynamic";
+
 const Layout = async ({ children }: { children: ReactNode }) => {
   const isUserAuthenticated = await isAuthenticated();
   if (!isUserAuthenticated) redirect("/sign-in");
