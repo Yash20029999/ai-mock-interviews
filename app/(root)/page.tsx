@@ -10,12 +10,43 @@ import {
   getLatestInterviews,
 } from "@/lib/actions/general.action";
 
+// Mark this route as dynamic since it uses cookies
+export const dynamic = "force-dynamic";
+
 async function Home() {
   const user = await getCurrentUser();
 
+  // Only fetch interviews if user exists
+  if (!user?.id) {
+    return (
+      <>
+        <section className="card-cta">
+          <div className="flex flex-col gap-6 max-w-lg">
+            <h2>Get Interview-Ready with AI-Powered Practice & Feedback</h2>
+            <p className="text-lg">
+              Practice real interview questions & get instant feedback
+            </p>
+
+            <Button asChild className="btn-primary max-sm:w-full">
+              <Link href="/interview">Start an Interview</Link>
+            </Button>
+          </div>
+
+          <Image
+            src="/robot.png"
+            alt="robo-dude"
+            width={400}
+            height={400}
+            className="max-sm:hidden"
+          />
+        </section>
+      </>
+    );
+  }
+
   const [userInterviews, allInterview] = await Promise.all([
-    getInterviewsByUserId(user?.id!),
-    getLatestInterviews({ userId: user?.id! }),
+    getInterviewsByUserId(user.id),
+    getLatestInterviews({ userId: user.id }),
   ]);
 
   const hasPastInterviews = userInterviews?.length! > 0;
