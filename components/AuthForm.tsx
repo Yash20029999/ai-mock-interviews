@@ -64,8 +64,28 @@ const AuthForm = ({ type }: { type: FormType }) => {
           return;
         }
 
-        toast.success("Account created successfully. Please sign in.");
-        router.push("/sign-in");
+        // Automatically sign in the user after successful sign-up
+        const idToken = await userCredential.user.getIdToken();
+        if (!idToken) {
+          toast.error("Account created but sign in failed. Please sign in manually.");
+          router.push("/sign-in");
+          return;
+        }
+
+        const signInResult = await signIn({
+          email,
+          idToken,
+        });
+
+        if (!signInResult?.success) {
+          toast.error("Account created but sign in failed. Please sign in manually.");
+          router.push("/sign-in");
+          return;
+        }
+
+        toast.success("Account created successfully!");
+        // Use window.location for a full page reload to ensure cookie is recognized
+        window.location.href = "/";
       } else {
         const { email, password } = data;
 
@@ -81,13 +101,19 @@ const AuthForm = ({ type }: { type: FormType }) => {
           return;
         }
 
-        await signIn({
+        const signInResult = await signIn({
           email,
           idToken,
         });
 
+        if (!signInResult?.success) {
+          toast.error(signInResult.message || "Sign in failed. Please try again.");
+          return;
+        }
+
         toast.success("Signed in successfully.");
-        router.push("/");
+        // Use window.location for a full page reload to ensure cookie is recognized
+        window.location.href = "/";
       }
     } catch (error) {
       console.log(error);
