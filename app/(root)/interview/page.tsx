@@ -7,18 +7,14 @@ export const dynamic = "force-dynamic";
 const Page = async () => {
   const user = await getCurrentUser();
 
-  if (!user) {
-    return <div>Loading...</div>;
-  }
-
   return (
     <>
       <h3>Interview generation</h3>
 
       <Agent
-        userName={user.name || "User"}
-        userId={user.id}
-        profileImage={user.profileURL}
+        userName={user?.name!}
+        userId={user?.id}
+        profileImage={user?.profileURL}
         type="generate"
       />
     </>

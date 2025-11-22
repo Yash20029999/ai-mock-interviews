@@ -16,9 +16,9 @@ export const dynamic = "force-dynamic";
 async function Home() {
   const user = await getCurrentUser();
 
-  // Handle case where user might be null (shouldn't happen due to layout, but safe check)
+  // Handle case where user might be null
   if (!user?.id) {
-    return <div>Loading...</div>;
+    return null;
   }
 
   const [userInterviews, allInterview] = await Promise.all([
@@ -26,8 +26,8 @@ async function Home() {
     getLatestInterviews({ userId: user.id }),
   ]);
 
-  const hasPastInterviews = (userInterviews?.length ?? 0) > 0;
-  const hasUpcomingInterviews = (allInterview?.length ?? 0) > 0;
+  const hasPastInterviews = userInterviews?.length! > 0;
+  const hasUpcomingInterviews = allInterview?.length! > 0;
 
   return (
     <>
@@ -60,7 +60,7 @@ async function Home() {
             userInterviews?.map((interview) => (
               <InterviewCard
                 key={interview.id}
-                userId={user.id}
+                userId={user?.id}
                 interviewId={interview.id}
                 role={interview.role}
                 type={interview.type}
@@ -82,7 +82,7 @@ async function Home() {
             allInterview?.map((interview) => (
               <InterviewCard
                 key={interview.id}
-                userId={user.id}
+                userId={user?.id}
                 interviewId={interview.id}
                 role={interview.role}
                 type={interview.type}

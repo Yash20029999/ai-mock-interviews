@@ -10,24 +10,19 @@ const SESSION_DURATION = 60 * 60 * 24 * 7;
 export async function setSessionCookie(idToken: string) {
   const cookieStore = await cookies();
 
-  try {
-    // Create session cookie
-    const sessionCookie = await auth.createSessionCookie(idToken, {
-      expiresIn: SESSION_DURATION * 1000, // milliseconds
-    });
+  // Create session cookie
+  const sessionCookie = await auth.createSessionCookie(idToken, {
+    expiresIn: SESSION_DURATION * 1000, // milliseconds
+  });
 
-    // Set cookie in the browser
-    cookieStore.set("session", sessionCookie, {
-      maxAge: SESSION_DURATION,
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-      sameSite: "lax",
-    });
-  } catch (error) {
-    console.error("Error setting session cookie:", error);
-    throw error;
-  }
+  // Set cookie in the browser
+  cookieStore.set("session", sessionCookie, {
+    maxAge: SESSION_DURATION,
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    sameSite: "lax",
+  });
 }
 
 export async function signUp(params: SignUpParams) {
@@ -75,64 +70,21 @@ export async function signUp(params: SignUpParams) {
 export async function signIn(params: SignInParams) {
   const { email, idToken } = params;
 
-  console.log("signIn server action called with email:", email);
-
   try {
-    // Verify the idToken and get user info directly from it
-    // This is more reliable than getUserByEmail, especially for newly created users
-    console.log("Verifying idToken...");
-    const decodedToken = await auth.verifyIdToken(idToken);
-    console.log("Token verified, UID:", decodedToken.uid);
-    
-    // Verify user exists in database
-    console.log("Checking user in database...");
-    const userRecord = await db
-      .collection("users")
-      .doc(decodedToken.uid)
-      .get();
-    
-    if (!userRecord.exists) {
-      console.error("User not found in database:", decodedToken.uid);
+    const userRecord = await auth.getUserByEmail(email);
+    if (!userRecord)
       return {
         success: false,
-        message: "User does not exist in database. Please create an account.",
+        message: "User does not exist. Create an account.",
       };
-    }
 
-    console.log("User found in database, setting session cookie...");
-    // Set the session cookie
     await setSessionCookie(idToken);
-    console.log("Session cookie set successfully");
-    
-    // Note: We don't verify the cookie here because cookies set in server actions
-    // are only available in subsequent requests, not in the same request
-    
-    return {
-      success: true,
-      message: "Signed in successfully.",
-    };
   } catch (error: any) {
-    console.error("Sign in error:", error);
-    console.error("Error details:", {
-      message: error.message,
-      code: error.code,
-      stack: error.stack,
-    });
-
-    // Provide more specific error messages
-    let errorMessage = "Failed to log into account. Please try again.";
-    
-    if (error.code === "auth/id-token-expired") {
-      errorMessage = "Session expired. Please sign in again.";
-    } else if (error.code === "auth/argument-error") {
-      errorMessage = "Invalid credentials. Please check your email and password.";
-    } else if (error.message) {
-      errorMessage = error.message;
-    }
+    console.log("");
 
     return {
       success: false,
-      message: errorMessage,
+      message: "Failed to log into account. Please try again.",
     };
   }
 }
