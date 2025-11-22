@@ -65,12 +65,16 @@ const AuthForm = ({ type }: { type: FormType }) => {
         }
 
         // Automatically sign in the user after successful sign-up
-        const idToken = await userCredential.user.getIdToken();
+        // Force refresh the token to ensure it's valid
+        const idToken = await userCredential.user.getIdToken(true);
         if (!idToken) {
           toast.error("Account created but sign in failed. Please sign in manually.");
           router.push("/sign-in");
           return;
         }
+
+        // Small delay to ensure user is fully created in Firebase Auth
+        await new Promise(resolve => setTimeout(resolve, 500));
 
         const signInResult = await signIn({
           email,
@@ -119,9 +123,10 @@ const AuthForm = ({ type }: { type: FormType }) => {
         // Use window.location for a full page reload to ensure cookie is recognized
         window.location.href = "/";
       }
-    } catch (error) {
-      console.log(error);
-      toast.error(`There was an error: ${error}`);
+    } catch (error: any) {
+      console.error("Auth form error:", error);
+      const errorMessage = error?.message || error?.toString() || "An unexpected error occurred";
+      toast.error(`There was an error: ${errorMessage}`);
     }
   };
 

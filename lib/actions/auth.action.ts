@@ -94,18 +94,11 @@ export async function signIn(params: SignInParams) {
       };
     }
 
+    // Set the session cookie
     await setSessionCookie(idToken);
     
-    // Verify cookie was set
-    const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get("session");
-    if (!sessionCookie) {
-      console.error("Failed to set session cookie");
-      return {
-        success: false,
-        message: "Failed to set session. Please try again.",
-      };
-    }
+    // Note: We don't verify the cookie here because cookies set in server actions
+    // are only available in subsequent requests, not in the same request
     
     return {
       success: true,
@@ -113,10 +106,26 @@ export async function signIn(params: SignInParams) {
     };
   } catch (error: any) {
     console.error("Sign in error:", error);
+    console.error("Error details:", {
+      message: error.message,
+      code: error.code,
+      stack: error.stack,
+    });
+
+    // Provide more specific error messages
+    let errorMessage = "Failed to log into account. Please try again.";
+    
+    if (error.code === "auth/id-token-expired") {
+      errorMessage = "Session expired. Please sign in again.";
+    } else if (error.code === "auth/argument-error") {
+      errorMessage = "Invalid credentials. Please check your email and password.";
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
 
     return {
       success: false,
-      message: error.message || "Failed to log into account. Please try again.",
+      message: errorMessage,
     };
   }
 }
