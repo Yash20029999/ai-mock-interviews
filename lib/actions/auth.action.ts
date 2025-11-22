@@ -71,16 +71,46 @@ export async function signIn(params: SignInParams) {
   const { email, idToken } = params;
 
   try {
-    const userRecord = await auth.getUserByEmail(email);
-    if (!userRecord)
+    // Verify the idToken to ensure it's valid
+    const decodedToken = await auth.verifyIdToken(idToken);
+    
+    // Check if user exists in database
+    const userRecord = await db
+      .collection("users")
+      .doc(decodedToken.uid)
+      .get();
+    
+    if (!userRecord.exists) {
       return {
         success: false,
-        message: "User does not exist. Create an account.",
+        message: "User does not exist in database. Please create an account.",
       };
+    }
 
+    // Create and set session cookie
     await setSessionCookie(idToken);
+    
+    return {
+      success: true,
+      message: "Signed in successfully.",
+    };
   } catch (error: any) {
-    console.log("");
+    console.error("Sign in error:", error);
+
+    // Provide more specific error messages
+    if (error.code === "auth/id-token-expired") {
+      return {
+        success: false,
+        message: "Session expired. Please sign in again.",
+      };
+    }
+    
+    if (error.code === "auth/argument-error" || error.code === "auth/invalid-id-token") {
+      return {
+        success: false,
+        message: "Invalid credentials. Please check your email and password.",
+      };
+    }
 
     return {
       success: false,
