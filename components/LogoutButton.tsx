@@ -1,12 +1,12 @@
 "use client";
 
-import { signOut as firebaseSignOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
+import { signOut as firebaseSignOut } from "firebase/auth";
 import { auth } from "@/firebase/client";
 import { signOut } from "@/lib/actions/auth.action";
 import { Button } from "@/components/ui/button";
 
-export default function LogoutButton() {
+export function LogoutButton() {
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -14,29 +14,26 @@ export default function LogoutButton() {
       // Sign out from Firebase client-side
       await firebaseSignOut(auth);
       
-      // Sign out from server-side (clear session cookie)
-      const result = await signOut();
+      // Clear server-side session cookie
+      await signOut();
       
-      if (result.success) {
-        // Redirect to sign-in page
-        router.push("/sign-in");
-        router.refresh(); // Refresh to clear any cached data
-      }
+      // Redirect to sign-in page
+      router.push("/sign-in");
+      router.refresh(); // Refresh to clear any cached data
     } catch (error) {
       console.error("Error signing out:", error);
       // Still try to redirect even if there's an error
       router.push("/sign-in");
-      router.refresh();
     }
   };
 
   return (
     <Button
-      variant="outline"
       onClick={handleLogout}
+      variant="outline"
       className="ml-auto"
     >
-      Sign Out
+      Logout
     </Button>
   );
 }

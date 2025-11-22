@@ -11,9 +11,6 @@ import {
 import { getCurrentUser } from "@/lib/actions/auth.action";
 import DisplayTechIcons from "@/components/DisplayTechIcons";
 
-// Mark this route as dynamic since it uses cookies
-export const dynamic = "force-dynamic";
-
 const InterviewDetails = async ({ params }: RouteParams) => {
   const { id } = await params;
 
@@ -22,12 +19,10 @@ const InterviewDetails = async ({ params }: RouteParams) => {
   const interview = await getInterviewById(id);
   if (!interview) redirect("/");
 
-  const feedback = user?.id
-    ? await getFeedbackByInterviewId({
-        interviewId: id,
-        userId: user.id,
-      })
-    : null;
+  const feedback = await getFeedbackByInterviewId({
+    interviewId: id,
+    userId: user?.id!,
+  });
 
   return (
     <>

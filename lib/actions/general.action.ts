@@ -77,11 +77,6 @@ export async function getFeedbackByInterviewId(
 ): Promise<Feedback | null> {
   const { interviewId, userId } = params;
 
-  // Validate required parameters
-  if (!interviewId || !userId || typeof userId !== "string") {
-    return null;
-  }
-
   const querySnapshot = await db
     .collection("feedback")
     .where("interviewId", "==", interviewId)
@@ -113,13 +108,7 @@ export async function getLatestInterviews(
       id: doc.id,
       ...doc.data(),
     }))
-    .filter((interview) => {
-      // Only filter by userId if it's provided and valid
-      if (!userId || typeof userId !== "string") {
-        return true; // Include all interviews if no userId provided
-      }
-      return interview.userId !== userId; // Exclude user's own interviews
-    })
+    .filter((interview) => interview.userId !== userId) // Exclude user's own interviews
     .sort((a, b) => {
       const dateA = new Date(a.createdAt || 0).getTime();
       const dateB = new Date(b.createdAt || 0).getTime();
@@ -133,11 +122,6 @@ export async function getLatestInterviews(
 export async function getInterviewsByUserId(
   userId: string
 ): Promise<Interview[] | null> {
-  // Validate userId
-  if (!userId || typeof userId !== "string") {
-    return null;
-  }
-
   // Fetch all interviews for the user, then sort in memory
   // This avoids requiring a composite index
   const interviews = await db

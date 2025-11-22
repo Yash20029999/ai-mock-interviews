@@ -10,9 +10,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { getCurrentUser } from "@/lib/actions/auth.action";
 
-// Mark this route as dynamic since it uses cookies
-export const dynamic = "force-dynamic";
-
 const Feedback = async ({ params }: RouteParams) => {
   const { id } = await params;
   const user = await getCurrentUser();
@@ -20,12 +17,10 @@ const Feedback = async ({ params }: RouteParams) => {
   const interview = await getInterviewById(id);
   if (!interview) redirect("/");
 
-  const feedback = user?.id
-    ? await getFeedbackByInterviewId({
-        interviewId: id,
-        userId: user.id,
-      })
-    : null;
+  const feedback = await getFeedbackByInterviewId({
+    interviewId: id,
+    userId: user?.id!,
+  });
 
   return (
     <section className="section-feedback">

@@ -16,13 +16,10 @@ export async function setSessionCookie(idToken: string) {
   });
 
   // Set cookie in the browser
-  // On Vercel, always use secure cookies (HTTPS is required)
-  const isProduction = process.env.NODE_ENV === "production" || process.env.VERCEL === "1";
-  
   cookieStore.set("session", sessionCookie, {
     maxAge: SESSION_DURATION,
     httpOnly: true,
-    secure: isProduction,
+    secure: process.env.NODE_ENV === "production",
     path: "/",
     sameSite: "lax",
   });
@@ -82,13 +79,8 @@ export async function signIn(params: SignInParams) {
       };
 
     await setSessionCookie(idToken);
-    
-    return {
-      success: true,
-      message: "Signed in successfully.",
-    };
   } catch (error: any) {
-    console.error("Sign in error:", error);
+    console.log("");
 
     return {
       success: false,
@@ -99,26 +91,22 @@ export async function signIn(params: SignInParams) {
 
 // Sign out user by clearing the session cookie
 export async function signOut() {
-  try {
-    const cookieStore = await cookies();
-    cookieStore.delete("session");
-    return { success: true };
-  } catch (error) {
-    console.error("Error signing out:", error);
-    return { success: false };
-  }
+  const cookieStore = await cookies();
+
+  // Delete the session cookie with the same settings as when it was set
+  cookieStore.delete("session", {
+    path: "/",
+  });
 }
 
 // Get current user from session cookie
 export async function getCurrentUser(): Promise<User | null> {
-  try {
-    const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get("session")?.value;
-    
-    if (!sessionCookie) {
-      return null;
-    }
+  const cookieStore = await cookies();
 
+  const sessionCookie = cookieStore.get("session")?.value;
+  if (!sessionCookie) return null;
+
+  try {
     const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
 
     // get user info from db
@@ -126,20 +114,16 @@ export async function getCurrentUser(): Promise<User | null> {
       .collection("users")
       .doc(decodedClaims.uid)
       .get();
-      
-    if (!userRecord.exists) {
-      return null;
-    }
+    if (!userRecord.exists) return null;
 
     return {
       ...userRecord.data(),
       id: userRecord.id,
     } as User;
   } catch (error) {
-    // Invalid or expired session - log in production for debugging
-    if (process.env.NODE_ENV === "production") {
-      console.error("Error verifying session:", error);
-    }
+    console.log(error);
+
+    // Invalid or expired session
     return null;
   }
 }

@@ -1,9 +1,6 @@
 import Agent from "@/components/Agent";
 import { getCurrentUser } from "@/lib/actions/auth.action";
 
-// Mark this route as dynamic since it uses cookies
-export const dynamic = "force-dynamic";
-
 const Page = async () => {
   const user = await getCurrentUser();
 
