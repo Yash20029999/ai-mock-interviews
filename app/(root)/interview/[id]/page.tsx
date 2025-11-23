@@ -10,6 +10,7 @@ import {
 } from "@/lib/actions/general.action";
 import { getCurrentUser } from "@/lib/actions/auth.action";
 import DisplayTechIcons from "@/components/DisplayTechIcons";
+import { dummyInterviews } from "@/constants";
 
 // Mark as dynamic since we use cookies
 export const dynamic = "force-dynamic";
@@ -19,7 +20,13 @@ const InterviewDetails = async ({ params }: RouteParams) => {
 
   const user = await getCurrentUser();
 
-  const interview = await getInterviewById(id);
+  let interview = await getInterviewById(id);
+
+  // Fallback to dummy interviews when no Firestore interview is found
+  if (!interview) {
+    interview = dummyInterviews.find((item) => item.id === id) || null;
+  }
+
   if (!interview) redirect("/");
 
   const feedback = user?.id
